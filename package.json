@@ -1,6 +1,6 @@
 {
   "name": "npm-git-snapshot",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Tiny tool for releasing npm snapshots and add git hash after snapshot.",
   "author": "Tibor Szalai <tibor.szalai.work@gmail.com>",
   "license": "MIT",
@@ -11,7 +11,7 @@
   "scripts": {
     "test": "node ./bin/npm-git-snapshot",
     "test:relative": "node ./bin/npm-git-snapshot -r /..",
-	"test:relative:short": "node ./bin/npm-git-snapshot -r /.. -s 8",
+    "test:relative:short": "node ./bin/npm-git-snapshot -r /.. -s 8",
     "help": "node ./bin/npm-git-snapshot --help"
   },
   "bugs": {
