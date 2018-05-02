@@ -16,7 +16,8 @@ program
   .parse(process.argv);
 
 var packageJsonPath = './package.json';
-var repoPath = program.relativeRepo ? path.resolve(__dirname + program.relativeRepo + '/.git') : path.resolve(__dirname + '/.git');
+var projectRoot = __dirname.includes('node_modules') ? __dirname.replace(new RegExp('\\\\', 'g'), '/').split('/node_modules/')[0] + '/.git' : __dirname + '/.git'
+var repoPath = program.relativeRepo ? path.resolve(__dirname + program.relativeRepo + '/.git') : path.resolve(projectRoot);
 
 console.log('@info: ', 'get git last commit hash from: ', repoPath, 'repository');
 console.log();
