@@ -1,0 +1,62 @@
+#!/usr/bin/env node
+
+"use strict";
+
+var program = require('commander');
+var fs = require('fs');
+var lineReader = require('line-reader');
+var gitCommits = require('git-commits');
+var gitSpawnedStream = require('git-spawned-stream');
+var path = require('path');
+
+program
+  .version('0.1.0')
+  .option('-r, --relativeRepo [path]', 'Relative path to repository')
+  .option('-s, --sortHash [=length]', 'Number of hash lenght')
+  .parse(process.argv);
+
+var packageJsonPath = './package.json';
+var repoPath = program.relativeRepo ? path.resolve(__dirname + program.relativeRepo + '/.git') : path.resolve(__dirname + '/.git');
+
+console.log('@info: ', 'get git last commit hash from: ', repoPath, 'repository');
+console.log();
+
+
+function updateVersion(hash, sort) {
+  console.log('@info:', 'current commit hash', hash);
+  let lines = [];
+  lineReader.eachLine(packageJsonPath, function (line, last) {
+    if (line.includes('version":')) {
+      if (line.includes('-SNAPSHOT-')) {
+        line = line.replace(/(.*")(.*)(-SNAPSHOT-.*)(".*)/g, "$1$2-SNAPSHOT-" + (sort ? sort.toString().replace('\r', '').replace('\n', '') : hash) + "$4");
+      } else {
+        line = line.replace(/(.*")(.*)(".*)/g, "$1$2-SNAPSHOT-" + (sort ? sort.toString().replace('\r', '').replace('\n', '') : hash) + "$3");
+      }
+      lines.push(line);
+      line = line.replace(/(.*")(.*)(".*)/g, "$1" + hash + "$3").replace('version', 'git-hash');
+      lines.push(line);
+    }
+    !line.includes('git-hash":') && lines.push(line);
+    if (last) {
+      console.log('@info:', 'file read finished in:', packageJsonPath, 'file');
+      fs.writeFile(packageJsonPath, lines.join('\r\n') + '\r\n', function (err) {
+        if (err) return console.log(err);
+        console.log('@info:', 'update version in:', packageJsonPath, 'file');
+        process.exit(0);
+      });
+    }
+  });
+}
+
+gitCommits(repoPath, {
+  limit: 1
+}).on('data', function (commit) {
+  let hash = commit.hash;
+  program.sortHash && gitSpawnedStream(repoPath, ['rev-parse', '--short=' + program.sortHash, hash]).on('data', function (shortHash) {
+    updateVersion(hash, shortHash);
+  });
+  !program.sortHash && updateVersion(hash);
+}).on('error', function (err) {
+  throw err;
+  process.exit(-1);
+});
